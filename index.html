@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 心意管家 · 邮件链接</title>
+<!-- 这一页会被会话令牌命中，不该被搜索引擎收进去 -->
+<meta name="robots" content="noindex, nofollow">
+<style>
+  /* 配色与字体栈照原型 prototype/index.html 的 :root，换成系统字体栈——
+     这里刻意不引任何 CDN 字体或脚本，见文件末尾的安全说明 */
+  :root{
+    --paper:#E7EAE4; --ink:#1F3D4C; --ink-soft:#4C6472;
+    --amber:#A8792F; --amber-deep:#8F6626; --rule:#D3DAD2;
+    --warm:#F4EFE4; --alert:#A9503F; --panel:#EDF0EA; --mist:#8FA89B;
+    --hand:'LXGW WenKai','KaiTi','STKaiti','楷体',serif;
+    --num:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:var(--hand); line-height:1.7;
+    display:flex; align-items:center; justify-content:center;
+    padding:24px; -webkit-font-smoothing:antialiased;
+  }
+  main{width:100%; max-width:22em}
+  .mark{font-size:13px; letter-spacing:.28em; color:var(--amber); margin:0 0 18px; text-align:center}
+  h1{font-size:21px; font-weight:700; letter-spacing:.03em; margin:0 0 10px; text-align:center}
+  p{font-size:14.5px; margin:0 0 8px}
+  p.body{color:var(--ink-soft)}
+  [hidden]{display:none !important}
+
+  /* 表单行照 App 的登录 / 注册页（src/features/auth/auth-ui.tsx） */
+  .row{margin-bottom:14px}
+  .row label{display:block;margin:0 0 6px;font-size:13px;letter-spacing:.03em;color:var(--ink-soft)}
+  .box{display:flex;align-items:center;background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding-left:12px;padding-right:8px}
+  .box.err{border-color:var(--alert)}
+  .box input{flex:1;min-width:0;border:0;background:none;padding:11px 0;font-size:15px;color:var(--ink);font-family:var(--num)}
+  .box input::placeholder{color:var(--mist)}
+  .eye{flex:0 0 auto;border:0;background:none;padding:9px 0 9px 8px;color:var(--ink-soft);cursor:pointer;line-height:0}
+  .eye:hover{color:var(--ink)}
+  .fielderr{margin:5px 0 0;font-size:12.5px;line-height:1.6;color:var(--alert)}
+
+  /* 主按钮照原型的 .stamp-cta：墨蓝实底、2px 圆角、.06em 字距 */
+  .cta{
+    display:block; width:100%; margin:20px 0 12px; padding:11px 0;
+    background:var(--ink); color:#F3F6F2; text-decoration:none; text-align:center;
+    font-family:var(--num); font-size:15px; letter-spacing:.06em;
+    border:0; border-radius:2px; cursor:pointer;
+  }
+  .cta:active{background:#162F3A}
+  .cta[disabled]{opacity:.6; cursor:default}
+  .hint{font-size:12.5px; color:var(--ink-soft); line-height:1.7; margin:12px 0 0; text-align:center}
+  .hint.key{margin-top:14px;padding:12px;background:var(--warm);border:1px solid var(--rule);border-radius:3px;color:var(--ink);text-align:left}
+  .err{color:var(--alert)}
+</style>
+</head>
+<body>
+<main>
+  <p class="mark">心 屿</p>
+
+  <!-- ① 令牌无效 / 过期 -->
+  <section id="s-error" hidden>
+    <h1 id="err-title">这个链接不能用了</h1>
+    <p class="body" id="err-body">这个链接已经过期了。</p>
+    <p class="hint key">回 App 的登录页，重新发一次试试。</p>
+  </section>
+
+  <!-- ② 直接打开本页（没有令牌） -->
+  <section id="s-bare" hidden>
+    <h1>请从邮件里的链接点进来</h1>
+    <p class="body">这一页只负责处理邮件里的链接，直接打开是什么都不会发生的。</p>
+  </section>
+
+  <!-- ③ 注册验证成功：不需要表单，告诉用户回 App 登录即可 -->
+  <section id="s-signup" hidden>
+    <h1>邮箱验证成功</h1>
+    <p class="body">账号已经可以用了。</p>
+    <p class="hint key">回 App 用刚才设的密码登录吧。</p>
+  </section>
+
+  <!-- ④ 重设密码：表单 -->
+  <section id="s-form" hidden>
+    <h1>设一个新密码</h1>
+    <p class="body">给这个账号换一个新密码。</p>
+
+    <form id="reset-form" novalidate>
+      <div class="row">
+        <label for="pw">新密码</label>
+        <div class="box" id="pw-box">
+          <input id="pw" type="password" placeholder="登录时用的新密码" autocomplete="new-password" enterkeyhint="next">
+          <button type="button" class="eye" id="pw-eye" aria-label="显示密码"></button>
+        </div>
+        <p class="fielderr" id="pw-err" hidden></p>
+      </div>
+
+      <div class="row">
+        <label for="pw2">确认新密码</label>
+        <div class="box" id="pw2-box">
+          <input id="pw2" type="password" placeholder="再填一次" autocomplete="new-password" enterkeyhint="done">
+          <button type="button" class="eye" id="pw2-eye" aria-label="显示密码"></button>
+        </div>
+        <p class="fielderr" id="pw2-err" hidden></p>
+      </div>
+
+      <p class="fielderr" id="form-err" hidden></p>
+      <button type="submit" class="cta" id="submit">保存新密码</button>
+    </form>
+  </section>
+
+  <!-- ⑤ 改密成功：只提示，不尝试深链回 App -->
+  <section id="s-done" hidden>
+    <h1>密码已经改好了</h1>
+    <p class="body">用新密码登录吧。</p>
+    <p class="hint key">回 App 的登录页，用刚才设的新密码登录。</p>
+  </section>
+
+  <!-- ⑥ 配置没填：部署时漏了这一步 -->
+  <section id="s-setup" hidden>
+    <h1>这一页还没配好</h1>
+    <p class="body">Supabase 的地址和 anon key 还没填进页面顶部的配置区。</p>
+    <p class="hint key">见 web/auth-landing/README.md 的「配置」一节。</p>
+  </section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============ 配置 ============ */
+  // SUPABASE_URL 项目 URL；SUPABASE_ANON_KEY anon public key（Project Settings → API）。
+  //
+  // **这两个值随页面公开发布**，这是链路本身的要求，不是疏忽：Supabase 要把用户的浏览器
+  // 302 到本页，页面必须公网可达，能打开页面就能读到这两个值。
+  // anon key 按设计就是公开的（随 App 打包下发、受 RLS 保护、Supabase 官方明确说可暴露在前端），
+  // 所以这不构成额外暴露——真正的门禁是 RLS，不是「藏住 anon key」。
+  // 想轮换：Supabase 控制台 → Project Settings → API → Rotate anon key，
+  // 然后**同时**改这里和 rnapp/.env 的 EXPO_PUBLIC_SUPABASE_ANON_KEY。
+  var SUPABASE_URL = 'https://hmpsqgaznuvoqznhusdp.supabase.co';
+  var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhtcHNxZ2F6bnV2b3F6bmh1c2RwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ3NDQ1MTcsImV4cCI6MjExMDMyMDUxN30.haGvs2QkyERGG0R6V2gchEs6Da8hoqSEPnCzFKR868k";
+
+  var el = function (id) { return document.getElementById(id); };
+  var sections = ['s-error', 's-bare', 's-signup', 's-form', 's-done', 's-setup'];
+
+  function show(id) {
+    for (var i = 0; i < sections.length; i++) {
+      el(sections[i]).hidden = sections[i] !== id;
+    }
+  }
+
+  /** Supabase 校验失败时回 error=access_denied&error_code=otp_expired&error_description=… */
+  var ERROR_TEXT = {
+    otp_expired: '这个链接已经过期了。',
+    access_denied: '这个链接不能被使用。'
+  };
+
+  function params() {
+    // Fragment 优先：implicit 流的令牌只在 Fragment 里
+    var raw = location.hash.replace(/^#/, '') || location.search.replace(/^\?/, '');
+    return new URLSearchParams(raw);
+  }
+
+  function showError(code, description) {
+    if (description) {
+      console.warn('[auth-landing] 链接校验失败：', decodeURIComponent(description).replace(/\+/g, ' '));
+    }
+    el('err-title').textContent = '这个链接不能用了';
+    el('err-body').textContent = ERROR_TEXT[code] || '这个链接不能用了。';
+    show('s-error');
+  }
+
+  /** 把 Supabase 的错误响应翻成人话。响应体是 { code, error_code, msg }，不是 { error } */
+  function humanizeError(payload) {
+    var p = payload || {};
+    var code = p.error_code || '';
+    var msg = p.msg || p.error || p.message || '';
+    if (code === 'bad_jwt' || code === 'session_expired' || code === 'session_not_found') {
+      return '登录状态失效了，请重新打开邮件里的链接。';
+    }
+    if (code === 'same_password') return '新密码不能和现在的密码一样。';
+    if (code === 'weak_password' || /at least (\d+) characters/i.test(msg)) {
+      var m = /at least (\d+) characters/i.exec(msg);
+      return m ? '密码至少要 ' + m[1] + ' 位。' : '密码长度不够，换一个长一点的。';
+    }
+    if (code === 'over_request_rate_limit' || /rate limit/i.test(msg)) {
+      return '操作太频繁了，请稍后再试。';
+    }
+    return '保存失败，请稍后再试。';
+  }
+
+  // ---- 眼睛：显示 / 隐藏 ----
+  function bindEye(inputId, eyeId, boxId) {
+    var input = el(inputId), eye = el(eyeId), box = el(boxId);
+    var EYE_OPEN = '<svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.8 10S4.7 5.6 10 5.6 18.2 10 18.2 10 15.3 14.4 10 14.4 1.8 10 1.8 10Z"/><circle cx="10" cy="10" r="2.7"/></svg>';
+    var EYE_OFF = '<svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.8 10S4.7 5.6 10 5.6 18.2 10 18.2 10 15.3 14.4 10 14.4 1.8 10 1.8 10Z"/><circle cx="10" cy="10" r="2.7"/><path d="M3.4 16.6 16.6 3.4" stroke-linecap="round"/></svg>';
+    eye.innerHTML = EYE_OPEN;
+    eye.addEventListener('click', function () {
+      var visible = input.type === 'text';
+      input.type = visible ? 'password' : 'text';
+      eye.innerHTML = visible ? EYE_OPEN : EYE_OFF;
+      eye.setAttribute('aria-label', visible ? '显示密码' : '隐藏密码');
+      input.focus();
+    });
+    return box;
+  }
+
+  // ---- 入口 ----
+  function init() {
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) { show('s-setup'); return; }
+
+    var p = params();
+    var code = p.get('error_code') || p.get('error') || '';
+    var description = p.get('error_description');
+    var accessToken = p.get('access_token');
+    var type = p.get('type');
+
+    // 错误必须先判：失败时 Fragment 里只有 error=…，没有任何令牌，
+    // 但它同样「非空」，不先拦就会把一串错误参数当成有效载荷。
+    if (code || description) { showError(code, description); return; }
+
+    if (!accessToken) { show('s-bare'); return; }
+
+    // 找回密码走表单；注册验证只需告诉用户成功了，不需要表单
+    if (type === 'recovery') {
+      show('s-form');
+      return;
+    }
+    show('s-signup');
+  }
+
+  // ---- 提交 ----
+  function bindSubmit(accessToken) {
+    var pw = el('pw'), pw2 = el('pw2'), submit = el('submit');
+
+    function fieldError(inputId, errId, boxId, text) {
+      el(errId).textContent = text;
+      el(errId).hidden = !text;
+      el(boxId).classList.toggle('err', !!text);
+      if (text) el(inputId).focus();
+      return !text;
+    }
+
+    el('reset-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      el('form-err').hidden = true;
+
+      var ok = true;
+      // 只校验「必填」与「两次一致」，不在本地设长度规则——服务端才是长度的权威，
+      // 客户端先设一条会出现「本地放过、服务端又打回」的裂缝（与 App 侧同一口径）
+      ok = fieldError('pw', 'pw-err', 'pw-box', pw.value.length ? '' : '新密码还没填。') && ok;
+      ok = fieldError('pw2', 'pw2-err', 'pw2-box',
+        pw2.value.length ? (pw2.value === pw.value ? '' : '两次输入的密码不一样。') : '请再填一次。') && ok;
+      if (!ok) return;
+
+      submit.disabled = true;
+      submit.textContent = '保存中…';
+
+      fetch(SUPABASE_URL.replace(/\/+$/, '') + '/auth/v1/user', {
+        method: 'PUT',
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: 'Bearer ' + accessToken,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ password: pw.value })
+      })
+        .then(function (res) {
+          return res.json().catch(function () { return null; }).then(function (body) {
+            if (res.ok) return null;
+            return body || {};
+          });
+        })
+        .then(function (errorBody) {
+          if (errorBody === null) { show('s-done'); return; }
+          el('form-err').textContent = humanizeError(errorBody);
+          el('form-err').hidden = false;
+          submit.disabled = false;
+          submit.textContent = '保存新密码';
+        })
+        .catch(function () {
+          el('form-err').textContent = '网络不通，检查一下连接再试。';
+          el('form-err').hidden = false;
+          submit.disabled = false;
+          submit.textContent = '保存新密码';
+        });
+    });
+  }
+
+  bindEye('pw', 'pw-eye', 'pw-box');
+  bindEye('pw2', 'pw2-eye', 'pw2-box');
+  init();
+
+  // 表单态才需要提交逻辑；access_token 从 Fragment 取
+  var token = params().get('access_token');
+  if (!el('s-form').hidden && token) bindSubmit(token);
+
+  /**
+   * 安全处理：把 Fragment 从地址栏抹掉。
+   *
+   * ① Fragment 里的 access_token / refresh_token 是**会话级凭证**，不会随 HTTP 请求发到服务器，
+   *    但会留在浏览器历史、地址栏和「复制链接」里。改完密就没用了，趁早抹掉。
+   * ② 整站只向 Supabase 自己发一个请求（PUT /auth/v1/user），不引任何第三方脚本或样式——
+   *    URL 里躺着凭证时，让第三方代码跑在本页内是不可接受的。
+   * ③ 不用 console 打印令牌。
+   */
+  setTimeout(function () {
+    if (location.hash) {
+      try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+    }
+  }, 1200);
+})();
+</script>
+</body>
+</html>
