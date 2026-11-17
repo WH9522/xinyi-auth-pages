@@ -41,6 +41,8 @@
   .eye{flex:0 0 auto;border:0;background:none;padding:9px 0 9px 8px;color:var(--ink-soft);cursor:pointer;line-height:0}
   .eye:hover{color:var(--ink)}
   .fielderr{margin:5px 0 0;font-size:12.5px;line-height:1.6;color:var(--alert)}
+  /* 常驻规则提示：有错误时让位（错误文案已把规则说全，同时显示是冗余） */
+  .hintline{margin:5px 0 0;font-size:12.5px;line-height:1.6;color:var(--ink-soft)}
 
   /* 主按钮照原型的 .stamp-cta：墨蓝实底、2px 圆角、.06em 字距 */
   .cta{
@@ -92,6 +94,7 @@
           <input id="pw" type="password" placeholder="登录时用的新密码" autocomplete="new-password" enterkeyhint="next">
           <button type="button" class="eye" id="pw-eye" aria-label="显示密码"></button>
         </div>
+        <p class="hintline" id="pw-hint"></p>
         <p class="fielderr" id="pw-err" hidden></p>
       </div>
 
@@ -143,6 +146,16 @@
   var el = function (id) { return document.getElementById(id); };
   var sections = ['s-error', 's-bare', 's-signup', 's-form', 's-done', 's-setup'];
 
+  /**
+   * 密码规则（2026-11-17 开发者在 Supabase 后台设定）
+   * 位置：Authentication → Providers → Email
+   *   Minimum password length  = 8
+   *   Password requirements    = 小写 + 大写 + 数字 + 符号
+   * 与 App 侧 rnapp/src/features/auth/auth-errors.ts 的 PASSWORD_RULE_HINT 同文本，
+   * **改了后台必须两边一起改**——否则用户在这两个页面看到的要求不一样。
+   */
+  var PASSWORD_RULE_HINT = '密码至少 8 位，并同时包含大写字母、小写字母、数字和符号。';
+
   function show(id) {
     for (var i = 0; i < sections.length; i++) {
       el(sections[i]).hidden = sections[i] !== id;
@@ -179,10 +192,10 @@
       return '登录状态失效了，请重新打开邮件里的链接。';
     }
     if (code === 'same_password') return '新密码不能和现在的密码一样。';
-    if (code === 'weak_password' || /at least (\d+) characters/i.test(msg)) {
-      var m = /at least (\d+) characters/i.exec(msg);
-      return m ? '密码至少要 ' + m[1] + ' 位。' : '密码长度不够，换一个长一点的。';
-    }
+    // 密码不合规：直接说全规则。这里**能**拿到响应体里的 weak_password.reasons，
+    // 但 App 侧拿不到（supabase-js 的 AuthError 只透传 code/message/status），
+    // 两边给出不同的精确度会造成「同一件事两种说法」；所以统一说全，永远是对的。
+    if (code === 'weak_password') return PASSWORD_RULE_HINT;
     if (code === 'over_request_rate_limit' || /rate limit/i.test(msg)) {
       return '操作太频繁了，请稍后再试。';
     }
@@ -246,11 +259,14 @@
       el('form-err').hidden = true;
 
       var ok = true;
-      // 只校验「必填」与「两次一致」，不在本地设长度规则——服务端才是长度的权威，
-      // 客户端先设一条会出现「本地放过、服务端又打回」的裂缝（与 App 侧同一口径）
+      // 只校验「必填」与「两次一致」，不在本地设长度与字符类规则——服务端才是规则的权威，
+      // 客户端先设一条会出现「本地放过、服务端又打回」的裂缝（与 App 侧同一口径）。
+      // 长度 / 字符类由输入框下方的常驻提示先说清，服务端打回时再由 humanizeError 说全。
       ok = fieldError('pw', 'pw-err', 'pw-box', pw.value.length ? '' : '新密码还没填。') && ok;
       ok = fieldError('pw2', 'pw2-err', 'pw2-box',
         pw2.value.length ? (pw2.value === pw.value ? '' : '两次输入的密码不一样。') : '请再填一次。') && ok;
+      // 有错误就把常驻提示收掉——错误文案已经把规则说全了，同时显示是冗余
+      el('pw-hint').hidden = !ok;
       if (!ok) return;
 
       submit.disabled = true;
@@ -289,6 +305,8 @@
 
   bindEye('pw', 'pw-eye', 'pw-box');
   bindEye('pw2', 'pw2-eye', 'pw2-box');
+  // 常驻的密码规则提示（文案见上方 PASSWORD_RULE_HINT 的注释）
+  el('pw-hint').textContent = PASSWORD_RULE_HINT;
   init();
 
   // 表单态才需要提交逻辑；access_token 从 Fragment 取
