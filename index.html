@@ -94,7 +94,6 @@
           <input id="pw" type="password" placeholder="登录时用的新密码" autocomplete="new-password" enterkeyhint="next">
           <button type="button" class="eye" id="pw-eye" aria-label="显示密码"></button>
         </div>
-        <p class="hintline" id="pw-hint"></p>
         <p class="fielderr" id="pw-err" hidden></p>
       </div>
 
@@ -104,6 +103,10 @@
           <input id="pw2" type="password" placeholder="再填一次" autocomplete="new-password" enterkeyhint="done">
           <button type="button" class="eye" id="pw2-eye" aria-label="显示密码"></button>
         </div>
+        {/* 规则提示挂在确认密码下方而非新密码下方：两个密码框连在一起不被文字切开，
+           且读到这里正好在点「保存新密码」之前——要记住的东西离动作越近越好。
+           与 App 侧注册页同一排法（src/app/(auth)/sign-up.tsx） */}
+        <p class="hintline" id="pw-hint"></p>
         <p class="fielderr" id="pw2-err" hidden></p>
       </div>
 
