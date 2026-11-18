@@ -25,7 +25,6 @@
     padding:24px; -webkit-font-smoothing:antialiased;
   }
   main{width:100%; max-width:22em}
-  .mark{font-size:13px; letter-spacing:.28em; color:var(--amber); margin:0 0 18px; text-align:center}
   h1{font-size:21px; font-weight:700; letter-spacing:.03em; margin:0 0 10px; text-align:center}
   p{font-size:14.5px; margin:0 0 8px}
   p.body{color:var(--ink-soft)}
@@ -60,8 +59,6 @@
 </head>
 <body>
 <main>
-  <p class="mark">心 屿</p>
-
   <!-- ① 令牌无效 / 过期 -->
   <section id="s-error" hidden>
     <h1 id="err-title">这个链接不能用了</h1>
@@ -91,7 +88,7 @@
       <div class="row">
         <label for="pw">新密码</label>
         <div class="box" id="pw-box">
-          <input id="pw" type="password" placeholder="登录时用的新密码" autocomplete="new-password" enterkeyhint="next">
+          <input id="pw" type="password" placeholder="请输入密码" autocomplete="new-password" enterkeyhint="next">
           <button type="button" class="eye" id="pw-eye" aria-label="显示密码"></button>
         </div>
         <p class="fielderr" id="pw-err" hidden></p>
@@ -100,7 +97,7 @@
       <div class="row">
         <label for="pw2">确认新密码</label>
         <div class="box" id="pw2-box">
-          <input id="pw2" type="password" placeholder="再填一次" autocomplete="new-password" enterkeyhint="done">
+          <input id="pw2" type="password" placeholder="再次输入密码" autocomplete="new-password" enterkeyhint="done">
           <button type="button" class="eye" id="pw2-eye" aria-label="显示密码"></button>
         </div>
         {/* 规则提示挂在确认密码下方而非新密码下方：两个密码框连在一起不被文字切开，
