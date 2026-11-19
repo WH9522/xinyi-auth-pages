@@ -35,8 +35,24 @@
   .row label{display:block;margin:0 0 6px;font-size:13px;letter-spacing:.03em;color:var(--ink-soft)}
   .box{display:flex;align-items:center;background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding-left:12px;padding-right:8px}
   .box.err{border-color:var(--alert)}
+  /* Chrome / Edge 会在获得焦点的输入框上画一个默认描边，很突兀（2026-11-18 开发者要求去掉）。
+     去掉后补一个自己的焦点反馈，否则键盘用户看不到焦点在哪：整个 .box 边框加深一档。
+     用 :focus-within 而非 input:focus，这样点输入框和 Tab 到输入框都覆盖得到。
+     .err 的两条放在最后：填错时聚焦也该看到红色，不该被焦点色盖掉。 */
+  .box input:focus{outline:none}
+  .box:focus-within{border-color:var(--ink)}
+  .box.err,.box.err:focus-within{border-color:var(--alert)}
   .box input{flex:1;min-width:0;border:0;background:none;padding:11px 0;font-size:15px;color:var(--ink);font-family:var(--num)}
   .box input::placeholder{color:var(--mist)}
+  /* 眼睛按钮（显示 / 隐藏切换）。2026-11-18：保留自己画的这个，设法关掉浏览器自带的。
+     桌面 Chrome / Edge 会自己往 input[type=password] 里注入一个同样的按钮，和我们这个
+     并排出现。按开发者当天的决定：**保留自己画的**（手机浏览器不给那个按钮，而本页真正
+     的运行环境就是手机，用浏览器自带的等于手机上没有显隐功能）。
+     Edge 的原生按钮可以用 ::-ms-reveal 关掉，下面就是；**Chrome 关不掉**——它注入在
+     shadow DOM 里，没有作者可控的伪元素（2026-11-18 查证，无解）。
+     所以桌面上若仍看到两个，那是 Chrome 的限制，不是漏改。 */
+  .box input::-ms-reveal,
+  .box input::-ms-clear{display:none}
   .eye{flex:0 0 auto;border:0;background:none;padding:9px 0 9px 8px;color:var(--ink-soft);cursor:pointer;line-height:0}
   .eye:hover{color:var(--ink)}
   .fielderr{margin:5px 0 0;font-size:12.5px;line-height:1.6;color:var(--alert)}
@@ -100,9 +116,13 @@
           <input id="pw2" type="password" placeholder="再次输入密码" autocomplete="new-password" enterkeyhint="done">
           <button type="button" class="eye" id="pw2-eye" aria-label="显示密码"></button>
         </div>
-        {/* 规则提示挂在确认密码下方而非新密码下方：两个密码框连在一起不被文字切开，
-           且读到这里正好在点「保存新密码」之前——要记住的东西离动作越近越好。
-           与 App 侧注册页同一排法（src/app/(auth)/sign-up.tsx） */}
+        <!-- 规则提示挂在确认密码下方而非新密码下方：两个密码框连在一起不被文字切开，
+             且读到这里正好在点「保存新密码」之前——要记住的东西离动作越近越好。
+             与 App 侧注册页同一排法（src/app/(auth)/sign-up.tsx）。
+             注意：这是 HTML 文件，注释只能用 HTML 的注释形式；JSX 的 {/* */} 是
+             .tsx 的写法，浏览器不认，会当成正文渲染出来（2026-11-18 真机验到并修掉的
+             就是这个）。另外**注释里不要出现结束注释的那一串字符**——把它当示例写进
+             注释，注释会被自己提前闭合，后半句照样漏到页面上。 -->
         <p class="hintline" id="pw-hint"></p>
         <p class="fielderr" id="pw2-err" hidden></p>
       </div>
